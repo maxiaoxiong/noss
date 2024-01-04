@@ -1,7 +1,6 @@
 import json
 import math
 import random
-from hashlib import sha256
 
 import requests
 import string
@@ -108,10 +107,9 @@ def get_block():
                                     'Sec-WebSocket-Key': 'lzAOYPq7IZeg+yB9zfHSfw=='})
     ws.run_forever()
 
-
 def get_block_from_rpc():
     url_list = [
-        "wss://arbitrum-one.publicnode.com",
+        "https://arbitrum-one.publicnode.com"
         "https://arb-mainnet.unifra.io/v1/bb7f9fd643754558bf204157b1af7931",
         "https://arbitrum.blockpi.network/v1/rpc/829a98f75d90ce7116e40fba9655b4d7dcb770db",
         "https://arbitrum-mainnet.infura.io/v3/80c0d6915cac453cb8e5b1facfaecc21",
@@ -130,12 +128,21 @@ def get_block_from_rpc():
         "https://arbitrum-one.public.blastapi.io",
         "https://arb-mainnet-public.unifra.io",
         "https://arbitrum.api.onfinality.io/public",
-        "https://arbitrum-one.publicnode.com",
         "https://arbitrum.meowrpc.com",
         "https://arbitrum.drpc.org"
     ]
 
-    headers = {}
+    headers = {
+      "accept": "application/json, text/plain, */*",
+      "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+      "content-type": "application/json",
+      "sec-ch-ua": "\"Not A(Brand\";v=\"99\", \"Microsoft Edge\";v=\"121\", \"Chromium\";v=\"121\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\"",
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "cross-site"
+    }
     genius_block = 165968698
     current_block = math.ceil(genius_block + (time.time() - 1704112210) * 4)
     current_block_height = str(hex(current_block))
@@ -269,7 +276,7 @@ if __name__ == "__main__":
     # 开启进程获取event_id的线程
     p1 = multiprocessing.Process(target=open_ws)
     # 开启获取最新区块高度的线程
-    p2 = multiprocessing.Process(target=get_block_from_rpc)
+    p2 = multiprocessing.Process(target=get_block)
     p1.start()
     process_list.append(p1)
     p2.start()
