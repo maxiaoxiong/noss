@@ -51,7 +51,6 @@ def open_ws():
                                     'Sec-WebSocket-Key': 'lzAOYPq7IZeg+yB9zfHSfw=='})
     ws.run_forever()
 
-open_ws()
 def get_block():
     def on_open(ws):
         logging.info("连接区块服务器...")
