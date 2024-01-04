@@ -28,6 +28,7 @@ def open_ws():
     def on_message(ws, msg):
         # 更新全局的event id到文件
         event_id = json.loads(msg)["eventId"]
+        logging.info(f"更新event_id {event_id}")
         with open(event_id_path, "w") as file:
             file.write(event_id)
 
@@ -50,10 +51,10 @@ def open_ws():
                                     'Sec-WebSocket-Key': 'lzAOYPq7IZeg+yB9zfHSfw=='})
     ws.run_forever()
 
-
+open_ws()
 def get_block():
     def on_open(ws):
-        logging.info("连接中继服务器中...")
+        logging.info("连接区块服务器...")
 
         def cal_block():
             genius_block = 165968698
