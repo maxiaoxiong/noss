@@ -67,8 +67,6 @@ def get_block():
         while True:
             current_block, current_block_height = cal_block()
             body['params'] = [current_block_height, False]
-            print(body)
-            print(ws.send(json.dumps(body)))
             logging.info(f"更新全局区块高度 {current_block}, 16进制表示为 {current_block_height}")
 
             with open(block_height_path, "w") as file:
