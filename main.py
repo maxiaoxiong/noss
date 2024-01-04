@@ -51,6 +51,7 @@ def open_ws():
                                     'Sec-WebSocket-Key': 'lzAOYPq7IZeg+yB9zfHSfw=='})
     ws.run_forever()
 
+
 def get_block():
     def on_open(ws):
         logging.info("连接区块服务器...")
@@ -105,6 +106,7 @@ def get_block():
                                     'Sec-WebSocket-Key': 'lzAOYPq7IZeg+yB9zfHSfw=='})
     ws.run_forever()
 
+
 def get_block_from_rpc():
     url_list = [
         "https://arbitrum-one.publicnode.com"
@@ -131,15 +133,15 @@ def get_block_from_rpc():
     ]
 
     headers = {
-      "accept": "application/json, text/plain, */*",
-      "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-      "content-type": "application/json",
-      "sec-ch-ua": "\"Not A(Brand\";v=\"99\", \"Microsoft Edge\";v=\"121\", \"Chromium\";v=\"121\"",
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": "\"Windows\"",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "cross-site"
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+        "content-type": "application/json",
+        "sec-ch-ua": "\"Not A(Brand\";v=\"99\", \"Microsoft Edge\";v=\"121\", \"Chromium\";v=\"121\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "cross-site"
     }
     genius_block = 165968698
     current_block = math.ceil(genius_block + (time.time() - 1704112210) * 4)
@@ -170,6 +172,7 @@ def get_block_from_rpc():
             except Exception as e:
                 logging.error(f"请求区块高度失败 {url}, {e}")
 
+
 def post_event(e):
     url = "https://api-worker.noscription.org/inscribe/postEvent"
     headers = {
@@ -184,7 +187,7 @@ def post_event(e):
         "sec-fetch-site": "same-site"
     }
 
-    response = requests.post(url, headers=headers, data=e)
+    response = requests.post(url, headers=headers, json=e)
     logging.info(f"挖掘成功 {e}, 提交结果 {response.text}")
 
 
@@ -217,9 +220,9 @@ def mine_data_and_submit(identity_pk):
     pe = PowEvent(difficulty=21)
     while True:
         e_copy = Event(
-            content="{\"p\":\"nrc-20\",\"op\":\"mint\",\"tick\":\"noss\",\"amt\":\"10\"}",
+            content=json.dumps({"p":"nrc-20","op":"mint","tick":"noss","amt":"10"}),
             kind=1,
-            pubkey="9e7a9563e9fcba5ffb0acad3bf49f80b3530970342c29bbe991d2d5a333cf410",
+            pubkey="581de2da3412b6fddf33e4e3fb0dd842d179d6c7bf00470f7d5cf24ec60ebaff",
             tags=[
                 ["p", "9be107b0d7218c67b4954ee3e6bd9e4dba06ef937a93f684e42f730a0c3d053c"],
                 ["e", "51ed7939a984edee863bfbb2e66fdc80436b000a8ddca442d83e6a2bf1636a95",
@@ -241,7 +244,7 @@ def mine_data_and_submit(identity_pk):
         sk = PrivateKey(bytes.fromhex(identity_pk.hex()))
         sig = sk.sign(bytes.fromhex(e_copy.id))
         e_copy.sig = sig.hex()
-        post_event({'event': json.dumps(e_copy.to_dict())})
+        post_event(e_copy.to_dict())
         logging.info(f"{threading.current_thread()} 挖掘中...")
 
 
@@ -266,10 +269,11 @@ def check_env():
         break
     logging.info("环境检查完成，开始运行!!!")
 
+
 if __name__ == "__main__":
     process_list = []
     # 初始化钱包
-    identity_pk = PrivateKey.from_nsec("nsec1rt3we4wgp2qarm985esws45fgdcguzvxpryegp3jarhjh6lrk5cs4gzgsu")
+    identity_pk = PrivateKey.from_nsec("@@")
     logging.info(f"Public key: {identity_pk.public_key.bech32()}")
     # 开启进程获取event_id的线程
     p1 = multiprocessing.Process(target=open_ws)
