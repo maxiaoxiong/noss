@@ -1,6 +1,7 @@
 import json
 import math
 import random
+import sys
 
 import requests
 import string
@@ -39,61 +40,6 @@ def open_ws():
         logging.error("中继服务器报错: {}".format(error))
 
     ws = websocket.WebSocketApp("wss://report-worker-2.noscription.org/",
-                                on_open=on_open,
-                                on_message=on_message,
-                                on_close=on_close,
-                                on_error=on_error,
-                                header={
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
-                                    'Sec-WebSocket-Version': '13',
-                                    'Accept-Encoding': 'gzip, deflate, br',
-                                    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
-                                    'Sec-WebSocket-Key': 'lzAOYPq7IZeg+yB9zfHSfw=='})
-    ws.run_forever()
-
-
-def get_block():
-    def on_open(ws):
-        logging.info("连接区块服务器...")
-
-        def cal_block():
-            genius_block = 165968698
-            current_block = math.ceil(genius_block + (time.time() - 1704112210) * 4)
-            current_block_height = str(hex(current_block))
-            return current_block, current_block_height
-
-        body = {"method": "eth_getBlockByNumber",
-                "id": 1,
-                "jsonrpc": "2.0"}
-        while True:
-            current_block, current_block_height = cal_block()
-            body['params'] = [current_block_height, False]
-            logging.info(f"更新全局区块高度 {current_block}, 16进制表示为 {current_block_height}")
-
-            with open(block_height_path, "w") as file:
-                file.write(str(current_block))
-            time.sleep(1)
-
-    def on_message(ws, message):
-        print(message)
-        data = json.loads(message)
-        if "result" in data and data['result'] is not None:
-            # 更新 current_block_height 和 seqWitness
-            seq_witness = data["result"]["hash"]
-            logging.info(f"更新最新区块关联地址为 {seq_witness}")
-            with open(seq_witness_path, "w") as file:
-                file.write(seq_witness)
-            time.sleep(1)
-        else:
-            logging.error(f"获取区块关联地址失败 {message}")
-
-    def on_close(ws):
-        logging.info("与中继服务器断开连接")
-
-    def on_error(ws, error):
-        logging.error("中继服务器报错: {}".format(error))
-
-    ws = websocket.WebSocketApp("wss://arbitrum-one.publicnode.com",
                                 on_open=on_open,
                                 on_message=on_message,
                                 on_close=on_close,
@@ -216,13 +162,14 @@ def mine_data_and_submit(identity_pk):
     def now():
         return int(time.time())
 
+    pub_key = identity_pk.public_key.hex()
     # 设置挖矿难度
     pe = PowEvent(difficulty=21)
     while True:
         e_copy = Event(
             content=json.dumps({"p":"nrc-20","op":"mint","tick":"noss","amt":"10"}),
             kind=1,
-            pubkey="581de2da3412b6fddf33e4e3fb0dd842d179d6c7bf00470f7d5cf24ec60ebaff",
+            pubkey=pub_key,
             tags=[
                 ["p", "9be107b0d7218c67b4954ee3e6bd9e4dba06ef937a93f684e42f730a0c3d053c"],
                 ["e", "51ed7939a984edee863bfbb2e66fdc80436b000a8ddca442d83e6a2bf1636a95",
@@ -271,14 +218,19 @@ def check_env():
 
 
 if __name__ == "__main__":
+    thread_num = 30
+    if len(sys.argv) < 1:
+        logging.info(f'线程数量设置为: {sys.argv[1]}')
+        thread_num = int(sys.argv[1])
     process_list = []
     # 初始化钱包
     identity_pk = PrivateKey.from_nsec("@@")
-    logging.info(f"Public key: {identity_pk.public_key.bech32()}")
+    pub_key = identity_pk.public_key.hex()
+    logging.info(f"pub key: {pub_key}")
     # 开启进程获取event_id的线程
     p1 = multiprocessing.Process(target=open_ws)
     # 开启获取最新区块高度的线程
-    p2 = multiprocessing.Process(target=get_block)
+    p2 = multiprocessing.Process(target=get_block_from_rpc)
     p1.start()
     process_list.append(p1)
     p2.start()
@@ -286,7 +238,7 @@ if __name__ == "__main__":
     # 检查环境
     check_env()
     try:
-        for i in range(30):
+        for i in range(thread_num):
             process = multiprocessing.Process(target=mine_data_and_submit,
                                               args=(identity_pk,))
             process.start()
