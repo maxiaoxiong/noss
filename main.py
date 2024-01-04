@@ -184,7 +184,7 @@ def post_event(e):
         "sec-fetch-site": "same-site"
     }
 
-    response = requests.post(url, headers=headers, json=e)
+    response = requests.post(url, headers=headers, data=e)
     logging.info(f"挖掘成功 {e}, 提交结果 {response.text}")
 
 
@@ -241,7 +241,7 @@ def mine_data_and_submit(identity_pk):
         sk = PrivateKey(bytes.fromhex(identity_pk.hex()))
         sig = sk.sign(bytes.fromhex(e_copy.id))
         e_copy.sig = sig.hex()
-        post_event({'event': e_copy.to_dict()})
+        post_event({'event': json.dumps(e_copy.to_dict())})
         logging.info(f"{threading.current_thread()} 挖掘中...")
 
 
