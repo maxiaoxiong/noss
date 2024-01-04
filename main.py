@@ -109,66 +109,61 @@ def get_block():
     ws.run_forever()
 
 
-get_block()
+def get_block_from_rpc():
+    url_list = [
+        "wss://arbitrum-one.publicnode.com",
+        "https://arb-mainnet.unifra.io/v1/bb7f9fd643754558bf204157b1af7931",
+        "https://arbitrum.blockpi.network/v1/rpc/829a98f75d90ce7116e40fba9655b4d7dcb770db",
+        "https://arbitrum-mainnet.infura.io/v3/80c0d6915cac453cb8e5b1facfaecc21",
+        "https://go.getblock.io/cf5a563f7de0420c90f6a81d357ed7a2",
+        "https://arb-mainnet.g.alchemy.com/v2/9KyAxglA5DqtMsGyDJ0gZvPot9o9skmJ",
+        "https://arbitrum.llamarpc.com",
+        "https://endpoints.omniatech.io/v1/arbitrum/one/public",
+        "https://endpoints.omniatech.io/v1/arbitrum/one/public",
+        "https://rpc.arb1.arbitrum.gateway.fm",
+        "https://lb.nodies.app/v1/3a59dad98dc84331ad26e7152934643a",
+        "https://rpc.ankr.com/arbitrum",
+        "https://arbitrum.blockpi.network/v1/rpc/public",
+        "https://arb1.arbitrum.io/rpc",
+        "https://1rpc.io/arb",
+        "https://arb-pokt.nodies.app",
+        "https://arbitrum-one.public.blastapi.io",
+        "https://arb-mainnet-public.unifra.io",
+        "https://arbitrum.api.onfinality.io/public",
+        "https://arbitrum-one.publicnode.com",
+        "https://arbitrum.meowrpc.com",
+        "https://arbitrum.drpc.org"
+    ]
 
-
-# def get_block_from_rpc():
-#     url_list = [
-#         "wss://arbitrum-one.publicnode.com",
-#         "https://arb-mainnet.unifra.io/v1/bb7f9fd643754558bf204157b1af7931",
-#         "https://arbitrum.blockpi.network/v1/rpc/829a98f75d90ce7116e40fba9655b4d7dcb770db",
-#         "https://arbitrum-mainnet.infura.io/v3/80c0d6915cac453cb8e5b1facfaecc21",
-#         "https://go.getblock.io/cf5a563f7de0420c90f6a81d357ed7a2",
-#         "https://arb-mainnet.g.alchemy.com/v2/9KyAxglA5DqtMsGyDJ0gZvPot9o9skmJ",
-#         "https://arbitrum.llamarpc.com",
-#         "https://endpoints.omniatech.io/v1/arbitrum/one/public",
-#         "https://endpoints.omniatech.io/v1/arbitrum/one/public",
-#         "https://rpc.arb1.arbitrum.gateway.fm",
-#         "https://lb.nodies.app/v1/3a59dad98dc84331ad26e7152934643a",
-#         "https://rpc.ankr.com/arbitrum",
-#         "https://arbitrum.blockpi.network/v1/rpc/public",
-#         "https://arb1.arbitrum.io/rpc",
-#         "https://1rpc.io/arb",
-#         "https://arb-pokt.nodies.app",
-#         "https://arbitrum-one.public.blastapi.io",
-#         "https://arb-mainnet-public.unifra.io",
-#         "https://arbitrum.api.onfinality.io/public",
-#         "https://arbitrum-one.publicnode.com",
-#         "https://arbitrum.meowrpc.com",
-#         "https://arbitrum.drpc.org"
-#     ]
-#
-#     headers = {}
-#     genius_block = 165968698
-#     current_block = math.ceil(genius_block + (time.time() - 1704112210) * 4)
-#     current_block_height = str(hex(current_block))
-#     body = {
-#         "method": "eth_getBlockByNumber",
-#         "params": [current_block_height, False],
-#         "id": 1,
-#         "jsonrpc": "2.0"
-#     }
-#     while True:
-#         for url in url_list:
-#             try:
-#                 response = requests.post(url, headers=headers, json=body)
-#                 data = response.json()
-#                 if "result" in data and data['result'] is not None:
-#                     # 更新 current_block_height 和 seqWitness
-#                     seq_witness = data["result"]["hash"]
-#                     logging.info(
-#                         f"更新全局区块高度 {current_block}, 16进制表示为 {current_block_height}, 关联地址为 {seq_witness}")
-#                     with open(block_height_path, "w") as file:
-#                         file.write(str(current_block))
-#                     with open(seq_witness_path, "w") as file:
-#                         file.write(seq_witness)
-#                     time.sleep(1)
-#                 else:
-#                     logging.error(f"获取区块高度失败 {url}, {body}, {data}")
-#             except Exception as e:
-#                 logging.error(f"请求区块高度失败 {url}, {e}")
-#
-# get_block_from_rpc()
+    headers = {}
+    genius_block = 165968698
+    current_block = math.ceil(genius_block + (time.time() - 1704112210) * 4)
+    current_block_height = str(hex(current_block))
+    body = {
+        "method": "eth_getBlockByNumber",
+        "params": [current_block_height, False],
+        "id": 1,
+        "jsonrpc": "2.0"
+    }
+    while True:
+        for url in url_list:
+            try:
+                response = requests.post(url, headers=headers, json=body)
+                data = response.json()
+                if "result" in data and data['result'] is not None:
+                    # 更新 current_block_height 和 seqWitness
+                    seq_witness = data["result"]["hash"]
+                    logging.info(
+                        f"更新全局区块高度 {current_block}, 16进制表示为 {current_block_height}, 关联地址为 {seq_witness}")
+                    with open(block_height_path, "w") as file:
+                        file.write(str(current_block))
+                    with open(seq_witness_path, "w") as file:
+                        file.write(seq_witness)
+                    time.sleep(1)
+                else:
+                    logging.error(f"获取区块高度失败 {url}, {body}, {data}")
+            except Exception as e:
+                logging.error(f"请求区块高度失败 {url}, {e}")
 
 def post_event(e):
     url = "https://api-worker.noscription.org/inscribe/postEvent"
@@ -269,12 +264,12 @@ def check_env():
 if __name__ == "__main__":
     process_list = []
     # 初始化钱包
-    identity_pk = PrivateKey.from_nsec("@@")
+    identity_pk = PrivateKey.from_nsec("nsec1rt3we4wgp2qarm985esws45fgdcguzvxpryegp3jarhjh6lrk5cs4gzgsu")
     logging.info(f"Public key: {identity_pk.public_key.bech32()}")
     # 开启进程获取event_id的线程
     p1 = multiprocessing.Process(target=open_ws)
     # 开启获取最新区块高度的线程
-    p2 = multiprocessing.Process(target=get_block)
+    p2 = multiprocessing.Process(target=get_block_from_rpc)
     p1.start()
     process_list.append(p1)
     p2.start()
