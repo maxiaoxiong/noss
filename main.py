@@ -14,6 +14,11 @@ import multiprocessing
 from pynostr.event import Event
 from pynostr.key import PrivateKey
 from pow import PowEvent
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+private_key = os.getenv('PRIVATE_KEY')
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 event_id_path = "event_id.txt"
@@ -29,7 +34,7 @@ def open_ws():
     def on_message(ws, msg):
         # 更新全局的event id到文件
         event_id = json.loads(msg)["eventId"]
-        logging.info(f"更新event_id {event_id}")
+        # logging.info(f"更新event_id {event_id}")
         with open(event_id_path, "w") as file:
             file.write(event_id)
 
@@ -114,9 +119,11 @@ def get_block_from_rpc():
                         file.write(seq_witness)
                     time.sleep(1)
                 else:
-                    logging.error(f"获取区块高度失败 {url}, {body}, {data}")
+                    pass
+                    # logging.error(f"获取区块高度失败 {url}, {body}, {data}")
             except Exception as e:
-                logging.error(f"请求区块高度失败 {url}, {e}")
+                # logging.error(f"请求区块高度失败 {url}, {e}")
+                pass
 
 
 def post_event(e):
@@ -133,8 +140,13 @@ def post_event(e):
         "sec-fetch-site": "same-site"
     }
 
-    response = requests.post(url, headers=headers, json=e)
-    logging.info(f"挖掘成功 {e}, 提交结果 {response.text}")
+    while True:
+        response = requests.post(url, headers=headers, json=e)
+        logging.info(f"挖掘成功 {e}, 提交结果 {response.status_code}")
+        if response.status_code == 200:
+            break
+        time.sleep(1)
+    
 
 
 def get_var(v):
@@ -191,8 +203,11 @@ def mine_data_and_submit(identity_pk):
         sk = PrivateKey(bytes.fromhex(identity_pk.hex()))
         sig = sk.sign(bytes.fromhex(e_copy.id))
         e_copy.sig = sig.hex()
-        post_event(e_copy.to_dict())
-        logging.info(f"{threading.current_thread()} 挖掘中...")
+        wrapped_data = {
+            "event":e_copy.to_dict()
+        }
+        post_event(json.dumps(wrapped_data))
+        # logging.info(f"{threading.current_thread()} 挖掘中...")
 
 
 def check_env():
@@ -218,13 +233,13 @@ def check_env():
 
 
 if __name__ == "__main__":
-    thread_num = 30
+    thread_num = 4
     if len(sys.argv) < 1:
         logging.info(f'线程数量设置为: {sys.argv[1]}')
         thread_num = int(sys.argv[1])
     process_list = []
     # 初始化钱包
-    identity_pk = PrivateKey.from_nsec("@@")
+    identity_pk = PrivateKey.from_nsec(private_key)
     pub_key = identity_pk.public_key.hex()
     logging.info(f"pub key: {pub_key}")
     # 开启进程获取event_id的线程
